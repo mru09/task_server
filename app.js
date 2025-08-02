@@ -14,7 +14,7 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
 
-app.use('/api/auth', userRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/reminders', reminderRoutes);
 
 module.exports = app;

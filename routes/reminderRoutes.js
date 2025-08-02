@@ -12,8 +12,29 @@ router.post('/', verifyUser, async (req, res) => {
 
 // Read all reminders
 router.get('/', verifyUser, async (req, res) => {
-  const reminders = await Reminder.find({ userId: req.userId, sent: false }).sort('date');
-  res.json(reminders);
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    const [reminders, totalCount] = await Promise.all([
+      Reminder.find({ userId: req.userId, sent: false })
+        .sort('date')
+        .skip(skip)
+        .limit(limit),
+      Reminder.countDocuments({ userId: req.userId, sent: false })
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.json({
+      reminders,
+      totalPages,
+      currentPage: page,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch reminders' });
+  }
 });
 
 // Update
