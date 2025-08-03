@@ -14,17 +14,30 @@ const transporter = nodemailer.createTransport({
 module.exports = () => {
   cron.schedule('* * * * *', async () => {
     const now = new Date();
+    console.log(now)
     const reminders = await Reminder.find({ date: { $lte: now }, sent: false });
-
+    console.log(reminders)
     for (const reminder of reminders) {
       const user = await User.findById(reminder.userId);
       if (!user) continue;
+
+      const emailBody = `Hello ${user.name || ''},
+
+      This is a reminder for your scheduled task: "${reminder.title}".
+
+      📝 Description:
+      ${reminder.description}
+
+      📅 Scheduled Time: ${new Date(reminder.date).toLocaleString()}
+
+      Thanks,
+      ReminderBot ⏳`;
 
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: user.email,
         subject: `Reminder: ${reminder.title}`,
-        text: reminder.description
+        text: emailBody
       });
 
       reminder.sent = true;
