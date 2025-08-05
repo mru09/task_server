@@ -4,13 +4,16 @@ const verifyUser = require('../middleware/verifyUser');
 
 const router = express.Router();
 
-// Create
 router.post('/', verifyUser, async (req, res) => {
-  const reminder = await Reminder.create({ ...req.body, userId: req.userId });
-  res.status(201).json(reminder);
+  try {
+    const reminder = await Reminder.create({ ...req.body, userId: req.userId });
+    res.status(201).json(reminder);
+  } catch (error) {
+    console.error('Error creating reminder:', error);
+    res.status(500).json({ message: 'Failed to create reminder' });
+  }
 });
 
-// Read all reminders
 router.get('/', verifyUser, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -32,25 +35,44 @@ router.get('/', verifyUser, async (req, res) => {
       totalPages,
       currentPage: page,
     });
-  } catch (err) {
+  } catch (error) {
+    console.error('Error fetching reminders:', error);
     res.status(500).json({ message: 'Failed to fetch reminders' });
   }
 });
 
-// Update
 router.put('/:id', verifyUser, async (req, res) => {
-  const updated = await Reminder.findOneAndUpdate(
-    { _id: req.params.id, userId: req.userId },
-    req.body,
-    { new: true }
-  );
-  res.json(updated);
+  try {
+    const updated = await Reminder.findOneAndUpdate(
+      { _id: req.params.id, userId: req.userId },
+      req.body,
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Reminder not found' });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating reminder:', error);
+    res.status(500).json({ message: 'Failed to update reminder' });
+  }
 });
 
-// Delete
 router.delete('/:id', verifyUser, async (req, res) => {
-  await Reminder.findOneAndDelete({ _id: req.params.id, userId: req.userId });
-  res.json({ message: 'Reminder deleted' });
+  try {
+    const deleted = await Reminder.findOneAndDelete({ _id: req.params.id, userId: req.userId });
+
+    if (!deleted) {
+      return res.status(404).json({ message: 'Reminder not found' });
+    }
+
+    res.json({ message: 'Reminder deleted' });
+  } catch (error) {
+    console.error('Error deleting reminder:', error);
+    res.status(500).json({ message: 'Failed to delete reminder' });
+  }
 });
 
 module.exports = router;
